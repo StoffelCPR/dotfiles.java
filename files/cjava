@@ -1,0 +1,4 @@
+#!/bin/bash
+sudo rm /var/lib/java/java
+sudo ln -sf /var/lib/java/java$1 /var/lib/java/java
+java -version

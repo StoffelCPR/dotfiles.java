@@ -23,7 +23,6 @@ mkdir ./java_binaries && echo -e "${GREEN}...done${NOCOLOR}"
 
 I=7
 for url in "${jdk_urls[@]}" ; do
-  break
     echo -e "${YELLOW}Processing JDK ${I}${NOCOLOR}"
     curl -o ./java_binaries/java${I} ${url}
     I=$((${I} + 1))
@@ -33,7 +32,7 @@ done
 if [[ ${OS} == Debian ]]; then
     {
         echo -e "${YELLOW}Creating java directory${NOCOLOR}"
-        [[ $(sudo mkdir ./jtest) ]] && echo -e "${GREEN}...done${NOCOLOR}"
+        [[ $(sudo mkdir ./var/lib/java) ]] && echo -e "${GREEN}...done${NOCOLOR}"
     } || {
         JAVA_VERSION=7
         DIRECTORY="/var/lib/java/"
@@ -42,7 +41,9 @@ if [[ ${OS} == Debian ]]; then
           fullpath="${DIRECTORY}java${JAVA_VERSION}"
 
           if [[ -d "/var/lib/java/java${JAVA_VERSION}" ]]; then
+            echo -e "${RED}"
             read -r -p "Java${JAVA_VERSION} already exists do you want to override it? [Y/n]" input
+            echo -e "${NOCOLOR}"
             case ${input} in
                 [yY][eE][sS]|[yY])
                     echo -e "${YELLOW}Removing existing jdk in ${DIRECTORY}java${JAVA_VERSION}${NOCOLOR}"
@@ -70,6 +71,13 @@ if [[ ${OS} == Debian ]]; then
                 continue
                 ;;
                 esac
+          else
+            echo -e "${YELLOW}Creating final JDK directory in /var/lib/java for Java ${JAVA_VERSION}${NOCOLOR}"
+            sudo mkdir ${fullpath} && echo -e "${GREEN}...done${NOCOLOR}"
+            echo -e "${YELLOW}Extracting & moving downloaded java${JAVA_VERSION} binaries to ${DIRECTORY}java${JAVA_VERSION}${NOCOLOR}"
+            sudo tar xzf ./java_binaries/java${JAVA_VERSION} -C ${DIRECTORY}java${JAVA_VERSION} --strip-components 1 && echo -e "${GREEN}...done${NOCOLOR}"
+            JAVA_VERSION=$(($JAVA_VERSION+1))
+            continue
           fi
           echo -e "${YELLOW}Creating final JDK directory in /var/lib/java for Java ${JAVA_VERSION}${NOCOLOR}"
           sudo mkdir ${fullpath} && echo -e "${GREEN}...done${NOCOLOR}"
@@ -77,49 +85,76 @@ if [[ ${OS} == Debian ]]; then
           sudo tar xzf ./java_binaries/java${JAVA_VERSION} -C ${DIRECTORY}java${JAVA_VERSION} --strip-components 1 && echo -e "${GREEN}...done${NOCOLOR}"
           JAVA_VERSION=$(($JAVA_VERSION+1))
         done
+        echo -e "${GREEN}All Java versions have been installed.${NOCOLOR}"
+        echo -e "${YELLOW} creating first simbolic link${NOCOLOR}"
+        if [[ -d "/var/lib/java/java" ]]; then
+          echo -e "${RED}"
+          read -r -p "Symbolic link /var/lib/java/java already exists do you want to overide it ? [Y/n]" input
+          echo -e "${NOCOLOR}"
+          case ${input} in
+            [yY][eE][sS]|[yY] )
+              echo -e "${YELLOW}Removing existing link${NOCOLOR}"
+              sudo rm -rf /var/lib/java/java && echo -e "${GREEN}...done${NOCOLOR}"
+              echo -e "${YELLOW} creating new link on java ${JAVA_VERSION}${NOCOLOR}"
+              sudo ln -sf /var/lib/java/java${JAVA_VERSION} /var/lib/java/java && echo -e "${GREEN}...done${NOCOLOR}"
+            ;;
+            [nN][oO]|[nN])
+              echo -e "${RED}Not creating new symblic link"
+            ;;
+            *)
+            echo -e "${YELLOW}Removing existing link${NOCOLOR}"
+            sudo rm -rf /var/lib/java/java && echo -e "${GREEN}...done${NOCOLOR}"
+            echo -e "${YELLOW} creating new link on java ${JAVA_VERSION}${NOCOLOR}"
+            sudo ln -sf /var/lib/java/java${JAVA_VERSION} /var/lib/java/java && echo -e "${GREEN}...done${NOCOLOR}"
+            ;;
+          esac
+        else
+          echo -e "${YELLOW} creating new link on java ${JAVA_VERSION}${NOCOLOR}"
+          sudo ln -sf /var/lib/java/java${JAVA_VERSION} /var/lib/java/java && echo -e "${GREEN}...done${NOCOLOR}"
+        fi
+
+        echo -e "${BLUE}All java versions were installed to ${DIRECTORY}.${NOCOLOR}"
+
+        # CJAVA COMMNAD
+        echo -e "${YELLOW}Checking for cjava command...${NOCOLOR}"
+        command -v cjava && echo "asdas"
+        if hash cjava 2>/dev/null; then
+          echo -e "${RED}cjava already exists!"
+          read -r -p "Do you want to override your cjava command? [Y/n] " input
+          echo -e "${NOCOLOR}"
+          case ${input} in
+              [yY][eE][sS]|[yY])
+                  CJAVA_LOCATION_CURRENT=$(which cjava)
+                  echo -e "${YELLOW}Deleting current cjava command which is located at: ${CJAVA_LOCATION_CURRENT}${NOCOLOR}"
+                  sudo rm -rf ${CJAVA_LOCATION_CURRENT} && echo -e "${GREEN}...done${NOCOLOR}"
+                  echo -e "${YELLOW}Copying cjava file to /bin/${NOCOLOR}"
+                  sudo cp "./dotfiles.java/files/cjava" /bin && echo -e "${GREEN}...done${NOCOLOR}"
+                  echo -e "${YELLOW}Modifying cjava with sudo privileges to make it executable${NOCOLOR}"
+                  sudo chmod a+x /bin/cjava && echo -e "${GREEN}...done${NOCOLOR}"
+              ;;
+              [nN][oO]|[nN])
+                  echo -e "${RED}Not overriding the current java command"
+              ;;
+              *)
+                CJAVA_LOCATION_CURRENT=$(which cjava)
+                echo -e "${YELLOW}Deleting current cjava command which is located at: ${CJAVA_LOCATION_CURRENT}${NOCOLOR}"
+                sudo rm -rf ${CJAVA_LOCATION_CURRENT} && echo -e "${GREEN}...done${NOCOLOR}"
+                echo -e "${YELLOW}Copying cjava file to /bin/${NOCOLOR}"
+                sudo cp "./dotfiles.java/files/cjava" /bin && echo -e "${GREEN}...done${NOCOLOR}"
+                echo -e "${YELLOW}Modifying cjava with sudo privileges to make it executable${NOCOLOR}"
+                sudo chmod a+x /bin/cjava && echo -e "${GREEN}...done${NOCOLOR}"
+              ;;
+              esac
+        else
+          echo -e "${YELLOW}Copying cjava file to /bin/${NOCOLOR}"
+          sudo cp "./dotfiles.java/files/cjava" /bin && echo -e "${GREEN}...done${NOCOLOR}"
+          echo -e "${YELLOW}Modifying cjava with sudo privileges to make it executable${NOCOLOR}"
+          sudo chmod a+x /bin/cjava && echo -e "${GREEN}...done${NOCOLOR}"
+        fi
         exit 1
     }
-    exit 1
-    echo "Copying cjava command to /bin..."
-    sudo cp java/dotfiles/cjava /bin/
-    echo "...done"
-    echo "Making cjava executable..."
-    sudo chmod a+x /bin/cjava
-    echo "...done"
-    echo "Making first symbolic link on java 11..."
-    sudo ln -sf /var/lib/java/java11 /var/lib/java/java
-    echo "done"
 elif [[ ${OS} == CentOS ]]; then
-    {
-        echo "Creating java directory"
-        sudo mkdir /var/lib/java
-    } || {
-        echo "Moving JDK files to java directory"
-        echo "Moving JDK 7 to /var/lib/java/java7..."
-        sudo mv jdk-7u80-linux-x64.tar.gz /var/lib/java/java7
-        echo "...done"
-        echo "Moving JDK 8 to /var/lib/java/java8..."
-        sudo mv jdk-8u201-linux-x64.tar.gz /var/lib/java/java8
-        echo "...done"
-        echo "Moving JDK 9 to /var/lib/java/java9..."
-        sudo mv jdk-9.0.4_linux-x64_bin.tar.gz /var/lib/java/java9
-        echo "...done"
-        echo "Moving JDK 10 to /var/lib/java/java10..."
-        sudo mv jdk-10.0.2_linux-x64_bin.tar.gz /var/lib/java/java10
-        echo "...done"
-        echo "Moving JDK 11 to /var/lib/java/java11..."
-        sudo mv jdk-11.0.2_linux-x64_bin.tar.gz /var/lib/java/java11
-        echo "...done"
-    }
-    echo "Copying cjava command to /bin..."
-    sudo cp java/dotfiles/cjava /bin/
-    echo "...done"
-    echo "Making cjava executable..."
-    sudo chmod a+x /bin/cjava
-    echo "...done"
-    echo "Making first symbolic link on java 11..."
-    sudo ln -sf /var/lib/java/java11 /var/lib/java/java
-    echo "done"
+    echo -e "${RED}Not implemented${NOCOLOR}"
 else
     echo "java installation failed.. Couldn't figure out what system you use"
 fi

@@ -23,6 +23,7 @@ mkdir ./java_binaries && echo -e "${GREEN}...done${NOCOLOR}"
 
 I=7
 for url in "${jdk_urls[@]}" ; do
+  break
     echo -e "${YELLOW}Processing JDK ${I}${NOCOLOR}"
     curl -o ./java_binaries/java${I} ${url}
     I=$((${I} + 1))
@@ -32,7 +33,7 @@ done
 if [[ ${OS} == Debian ]]; then
     {
         echo -e "${YELLOW}Creating java directory${NOCOLOR}"
-        [[ $(sudo mkdir ./var/lib/java) ]] && echo -e "${GREEN}...done${NOCOLOR}"
+        [[ $(sudo mkdir /var/lib/java) ]] && echo -e "${GREEN}...done${NOCOLOR}"
     } || {
         JAVA_VERSION=7
         DIRECTORY="/var/lib/java/"
@@ -86,7 +87,9 @@ if [[ ${OS} == Debian ]]; then
           JAVA_VERSION=$(($JAVA_VERSION+1))
         done
         echo -e "${GREEN}All Java versions have been installed.${NOCOLOR}"
-        echo -e "${YELLOW} creating first simbolic link${NOCOLOR}"
+        echo -e "${YELLOW}Creating first simbolic link${NOCOLOR}"
+
+        JAVA_VERSION=$((${JAVA_VERSION}-1))
         if [[ -d "/var/lib/java/java" ]]; then
           echo -e "${RED}"
           read -r -p "Symbolic link /var/lib/java/java already exists do you want to overide it ? [Y/n]" input
@@ -117,7 +120,7 @@ if [[ ${OS} == Debian ]]; then
 
         # CJAVA COMMNAD
         echo -e "${YELLOW}Checking for cjava command...${NOCOLOR}"
-        command -v cjava && echo "asdas"
+
         if hash cjava 2>/dev/null; then
           echo -e "${RED}cjava already exists!"
           read -r -p "Do you want to override your cjava command? [Y/n] " input

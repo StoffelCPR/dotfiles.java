@@ -23,14 +23,13 @@ mkdir ./java_binaries && echo -e "${GREEN}...done${NOCOLOR}"
 
 I=7
 for url in "${jdk_urls[@]}" ; do
-  break
     echo -e "${YELLOW}Processing JDK ${I}${NOCOLOR}"
     curl -o ./java_binaries/java${I} ${url}
     I=$((${I} + 1))
 done
 
 
-if [[ ${OS} == Debian ]]; then
+if [[ Debian == Debian ]]; then
     {
         echo -e "${YELLOW}Creating java directory${NOCOLOR}"
         [[ $(sudo mkdir /var/lib/java) ]] && echo -e "${GREEN}...done${NOCOLOR}"
